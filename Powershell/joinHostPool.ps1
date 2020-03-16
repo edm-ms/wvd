@@ -1,3 +1,13 @@
+##############################
+#    WVD Script Parameters   #
+##############################
+Param (        
+    [Parameter(Mandatory=$true)]
+        [string]$ProfilePath,
+    [Parameter(Mandatory=$true)]
+        [string]$RegistrationToken
+)
+
 ######################
 #    WVD Variables   #
 ######################
@@ -6,6 +16,23 @@ $WVDBootURI              = 'https://query.prod.cms.rt.microsoft.com/cms/api/am/b
 $WVDAgentURI             = 'https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrmXv'
 $WVDAgentInstaller       = 'WVD-Agent.msi'
 $WVDBootInstaller        = 'WVD-Bootloader.msi'
+
+####################################
+#    Test/Create Temp Directory    #
+####################################
+if((Test-Path $Localpath) -eq $false) {
+    Write-Host `
+        -ForegroundColor Cyan `
+        -BackgroundColor Black `
+        "creating temp directory"
+    New-Item -Path $Localpath -ItemType Directory
+}
+else {
+    Write-Host `
+        -ForegroundColor Yellow `
+        -BackgroundColor Black `
+        "temp directory already exists"
+}
 
 #################################
 #    Download WVD Componants    #

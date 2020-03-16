@@ -11,11 +11,36 @@
         "count": {
             "type": "int",
             "allowedValues": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        },
+        "domainJoinUserName": {
+            "type": "String",
+            "metadata": {
+                "description": "Domain NetBiosName plus User name of a domain user with sufficient rights to perfom domain join operation. E.g. domain\\username"
+            }
+        },
+        "domainJoinUserPassword": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Domain user password"
+            }
+        },
+        "domainFQDN": {
+            "type": "String",
+            "metadata": {
+                "description": "Domain FQDN where the virtual machine will be joined"
+            }
+        },
+        "ouPath": {
+            "defaultValue": "",
+            "type": "String",
+            "metadata": {
+                "description": "Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of the OU in quotation marks. Example: \"OU=testOU; DC=domain; DC=Domain; DC=com\""
+            }
         }
     },
     "variables": {
         "VMName": "[concat(parameters('vmName'),'-', parameters('count'))]",
-        "fileUris": "https://raw.githubusercontent.com/edm-ms/wvd/master/PowerShell/joinHostPool.ps1",
+        "fileUris": "https://raw.githubusercontent.com/edm-ms/wvd/master/Powershell/joinHostPool.ps1",
         "UriFileNamePieces": "[split(variables('fileUris'), '/')]",
         "firstFileNameString": "[variables('UriFileNamePieces')[sub(length(variables('UriFileNamePieces')), 1)]]",
         "firstFileNameBreakString": "[split(variables('firstFileNameString'), '?')]",
@@ -23,6 +48,32 @@
         "Arguments": "[string(concat('-RegistrationToken ', parameters('RegistrationToken')))]"
     },
     "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2015-06-15",
+            "name": "[concat(trim(variables('vmListArray')[copyIndex()]),'/joindomain')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "JsonADDomainExtension",
+                "typeHandlerVersion": "1.3",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "Name": "[parameters('domainFQDN')]",
+                    "User": "[parameters('domainJoinUserName')]",
+                    "Restart": "true",
+                    "Options": 3,
+                    "OUPath": "[parameters('ouPath')]"
+                },
+                "protectedSettings": {
+                    "Password": "[parameters('domainJoinUserPassword')]"
+                }
+            },
+            "copy": {
+                "name": "vmDomainJoinCopy",
+                "count": "[parameters('count')]"
+            }
+        },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('VMName'),copyIndex(),'/CustomScriptExtension')]",
@@ -40,7 +91,7 @@
                 "settings": {
                 "fileUris": [
                     "[variables('fileUris')]"
-                ]
+                    ]
                 },
                 "protectedSettings": {
                 "commandToExecute": "[concat ('powershell -ExecutionPolicy Unrestricted -File ', variables('firstFileName'), ' ', variables('arguments'))]"
