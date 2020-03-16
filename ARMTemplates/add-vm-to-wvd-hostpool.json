@@ -1,0 +1,53 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "registrationToken": {
+            "type":"string"
+        },
+        "vmName": {
+            "type": "string"
+        },
+        "count": {
+            "type": "int",
+            "allowedValues": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        }
+    },
+    "variables": {
+        "VMName": "[concat(parameters('vmName'),'-', parameters('count'))]",
+        "fileUris": "https://raw.githubusercontent.com/edm-ms/wvd/master/PowerShell/joinHostPool.ps1",
+        "UriFileNamePieces": "[split(variables('fileUris'), '/')]",
+        "firstFileNameString": "[variables('UriFileNamePieces')[sub(length(variables('UriFileNamePieces')), 1)]]",
+        "firstFileNameBreakString": "[split(variables('firstFileNameString'), '?')]",
+        "firstFileName": "[variables('firstFileNameBreakString')[0]]",
+        "Arguments": "[string(concat('-RegistrationToken ', parameters('RegistrationToken')))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('VMName'),copyIndex(),'/CustomScriptExtension')]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "Script-Copy",
+                "count": "[parameters('count')]"
+            },
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.9",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                "fileUris": [
+                    "[variables('fileUris')]"
+                ]
+                },
+                "protectedSettings": {
+                "commandToExecute": "[concat ('powershell -ExecutionPolicy Unrestricted -File ', variables('firstFileName'), ' ', variables('arguments'))]"
+                }
+            },
+            "dependsOn": []
+        }
+    ],
+    "outputs": {}
+}

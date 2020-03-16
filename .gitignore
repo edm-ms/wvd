@@ -1,0 +1,8 @@
+Blueprints/HostPool/Artifacts/parameters.json
+Blueprints/HostPool/Blueprint.json
+ARMTemplates/HostPool/template.json
+ARMTemplates/HostPool/sia-wvd-template.zip
+ARMTemplates/HostPool/sia-template.json
+ARMTemplates/HostPool/sia-parameters.json
+ARMTemplates/HostPool/parameters.json
+Blueprints/HostPool/Artifacts/artifact.hostpool.json
